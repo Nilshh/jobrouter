@@ -21,20 +21,12 @@ class BaseScraper(ABC):
     def fetch_page(self, url, params=None, headers=None):
         """Ruft eine Webseite ab"""
         try:
-            # Füge einen zufälligen Delay hinzu um Blocking zu vermeiden
-            time.sleep(2)
-            
+            time.sleep(1)
             response = requests.get(url, params=params, headers=headers, timeout=self.timeout)
             response.raise_for_status()
             logger.debug(f"{self.name}: Seite erfolgreich geladen ({len(response.text)} bytes)")
             return response.text
-        except requests.exceptions.Timeout:
-            logger.error(f"{self.name}: Timeout beim Abrufen der Seite")
-            return None
-        except requests.exceptions.ConnectionError:
-            logger.error(f"{self.name}: Verbindungsfehler")
-            return None
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             logger.error(f"{self.name}: Fehler beim Abrufen: {e}")
             return None
 
