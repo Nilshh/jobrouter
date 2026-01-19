@@ -10,21 +10,11 @@ class LinkedInScraper(BaseScraper):
         logger.info(f"{self.name}: Starte Scraping...")
         
         try:
-            url = "https://de.linkedin.com/jobs/search/"
-            query_str = " OR ".join(query) if isinstance(query, list) else query
-            params = {
-                "keywords": query_str,
-                "location": location,
-                "f_TPR": "r86400"  # Letzte 24 Stunden
-            }
-            
-            html = self.fetch_page(url, params=params, headers=DEFAULT_HEADERS)
-            if not html:
-                logger.warning(f"{self.name}: Keine HTML-Antwort")
-                return []
-            
-            logger.warning(f"{self.name}: LinkedIn erfordert Selenium für vollständiges Scraping")
+            # LinkedIn ist sehr schwierig zu scrapen, da es JavaScript nutzt
+            # Für eine produktive Version würde Selenium benötigt
+            logger.warning(f"{self.name}: LinkedIn erfordert Selenium/Playwright für vollständiges Scraping")
+            logger.info(f"{self.name}: Überspringe LinkedIn (benötigt erweiterte Browser-Automation)")
             return []
         except Exception as e:
-            logger.error(f"{self.name}: Fehler - {e}")
+            logger.error(f"{self.name}: Fehler - {e}", exc_info=True)
             return []
