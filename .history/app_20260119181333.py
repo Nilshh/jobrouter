@@ -41,102 +41,6 @@ def index():
         logger.error(f"Fehler auf Hauptseite: {e}", exc_info=True)
         return render_template('500.html'), 500
 
-@app.route('/index_test')
-def index_test():
-    """Test-Index-Seite für Debugging"""
-    logger.info("Test-Index-Seite aufgerufen")
-    
-    html = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Test</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    </head>
-    <body class="p-5">
-        <h1>✓ Test Seite funktioniert!</h1>
-        <p><a href="/" class="btn btn-secondary">← Zurück zur Hauptseite</a></p>
-        
-        <hr>
-        
-        <h3>API Tests</h3>
-        <button id="testApiBtn" class="btn btn-primary mb-3">Test API (/api/test)</button>
-        <button id="testCitiesBtn" class="btn btn-primary mb-3">Test Cities (/api/cities)</button>
-        <button id="testJobsBtn" class="btn btn-primary mb-3">Test Jobs (/api/jobs)</button>
-        <button id="testScrapeBtn" class="btn btn-primary mb-3">Test Scrape (/api/scrape)</button>
-        
-        <hr>
-        <div id="output" class="alert alert-info">Klick auf einen Button um zu testen...</div>
-        
-        <script>
-            console.log('✓ Test-Seite geladen');
-            
-            document.getElementById('testApiBtn').addEventListener('click', async () => {
-                console.log('→ Teste /api/test');
-                try {
-                    const response = await fetch('/api/test');
-                    const data = await response.json();
-                    document.getElementById('output').innerHTML = '<strong>✓ API Test erfolgreich:</strong><br><pre>' + JSON.stringify(data, null, 2) + '</pre>';
-                    console.log('✓ API funktioniert:', data);
-                } catch (error) {
-                    document.getElementById('output').innerHTML = '<strong class="text-danger">✗ Fehler:</strong> ' + error.message;
-                    console.error('✗ Fehler:', error);
-                }
-            });
-            
-            document.getElementById('testCitiesBtn').addEventListener('click', async () => {
-                console.log('→ Teste /api/cities');
-                try {
-                    const response = await fetch('/api/cities');
-                    const data = await response.json();
-                    document.getElementById('output').innerHTML = '<strong>✓ Cities Test erfolgreich:</strong><br>' + data.cities.length + ' Städte gefunden<br><pre>' + JSON.stringify(data.cities.slice(0, 5), null, 2) + '...</pre>';
-                    console.log('✓ Cities funktioniert:', data);
-                } catch (error) {
-                    document.getElementById('output').innerHTML = '<strong class="text-danger">✗ Fehler:</strong> ' + error.message;
-                    console.error('✗ Fehler:', error);
-                }
-            });
-            
-            document.getElementById('testJobsBtn').addEventListener('click', async () => {
-                console.log('→ Teste /api/jobs');
-                try {
-                    const response = await fetch('/api/jobs?limit=5');
-                    const data = await response.json();
-                    document.getElementById('output').innerHTML = '<strong>✓ Jobs Test erfolgreich:</strong><br>' + data.count + ' Jobs gefunden<br><pre>' + JSON.stringify(data.jobs.slice(0, 1), null, 2) + '...</pre>';
-                    console.log('✓ Jobs funktioniert:', data);
-                } catch (error) {
-                    document.getElementById('output').innerHTML = '<strong class="text-danger">✗ Fehler:</strong> ' + error.message;
-                    console.error('✗ Fehler:', error);
-                }
-            });
-            
-            document.getElementById('testScrapeBtn').addEventListener('click', async () => {
-                console.log('→ Teste /api/scrape');
-                document.getElementById('output').innerHTML = '<div class="alert alert-info"><span class="spinner-border spinner-border-sm me-2"></span> Scraping läuft...</div>';
-                try {
-                    const response = await fetch('/api/scrape', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            query: 'CIO',
-                            location: 'Berlin',
-                            radius: 50
-                        })
-                    });
-                    const data = await response.json();
-                    document.getElementById('output').innerHTML = '<strong>✓ Scrape Test erfolgreich:</strong><br><pre>' + JSON.stringify(data, null, 2) + '</pre>';
-                    console.log('✓ Scrape funktioniert:', data);
-                } catch (error) {
-                    document.getElementById('output').innerHTML = '<strong class="text-danger">✗ Fehler:</strong> ' + error.message;
-                    console.error('✗ Fehler:', error);
-                }
-            });
-        </script>
-    </body>
-    </html>
-    """
-    return html
-
 @app.route('/test')
 def test_page():
     """Test-Seite für Debugging"""
@@ -263,7 +167,7 @@ def api_jobs():
 @app.errorhandler(404)
 def not_found(error):
     """404 Error Handler"""
-    logger.warning(f"404 Fehler: {request.path}")
+    logger.warning(f"404 Fehler: {error}")
     return render_template('404.html'), 404
 
 @app.errorhandler(500)
@@ -316,6 +220,7 @@ def after_request(response):
 if __name__ == '__main__':
     logger.info("=" * 80)
     logger.info(f"Starte {PROJECT_NAME}")
+    logger.info(f"Version: {PROJECT_VERSION if 'PROJECT_VERSION' in dir() else 'unbekannt'}")
     logger.info(f"Host: {FLASK_HOST}")
     logger.info(f"Port: {FLASK_PORT}")
     logger.info(f"Debug: {FLASK_DEBUG}")

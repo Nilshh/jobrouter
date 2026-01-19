@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Test Seite</h1>
+        
+        <button id="testApiBtn" class="btn btn-primary mb-3">Test API</button>
+        <button id="testCitiesBtn" class="btn btn-primary mb-3">Test Cities</button>
+        <button id="testJobsBtn" class="btn btn-primary mb-3">Test Jobs</button>
+        
+        <div id="output" class="alert alert-info"></div>
+    </div>
+</div>
+
+<script>
+    console.log('✓ Test-Seite geladen');
+    
+    document.getElementById('testApiBtn').addEventListener('click', async () => {
+        console.log('→ Teste API...');
+        try {
+            const response = await fetch('/api/test');
+            const data = await response.json();
+            document.getElementById('output').innerHTML = '<strong>API Test erfolgreich:</strong><br>' + JSON.stringify(data, null, 2);
+            console.log('✓ API OK:', data);
+        } catch (error) {
+            document.getElementById('output').innerHTML = '<strong class="text-danger">Fehler:</strong> ' + error.message;
+            console.error('✗ API Fehler:', error);
+        }
+    });
+    
+    document.getElementById('testCitiesBtn').addEventListener('click', async () => {
+        console.log('→ Teste Cities...');
+        try {
+            const response = await fetch('/api/cities');
+            const data = await response.json();
+            document.getElementById('output').innerHTML = '<strong>Cities Test erfolgreich:</strong><br>' + JSON.stringify(data, null, 2);
+            console.log('✓ Cities OK:', data);
+        } catch (error) {
+            document.getElementById('output').innerHTML = '<strong class="text-danger">Fehler:</strong> ' + error.message;
+            console.error('✗ Cities Fehler:', error);
+        }
+    });
+    
+    document.getElementById('testJobsBtn').addEventListener('click', async () => {
+        console.log('→ Teste Jobs...');
+        try {
+            const response = await fetch('/api/jobs?limit=10');
+            const data = await response.json();
+            document.getElementById('output').innerHTML = '<strong>Jobs Test erfolgreich:</strong><br>' + JSON.stringify(data, null, 2);
+            console.log('✓ Jobs OK:', data);
+        } catch (error) {
+            document.getElementById('output').innerHTML = '<strong class="text-danger">Fehler:</strong> ' + error.message;
+            console.error('✗ Jobs Fehler:', error);
+        }
+    });
+</script>
+{% endblock %}
