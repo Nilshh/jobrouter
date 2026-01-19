@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: job-scraper
     ports:
-      - "8080:5000"  # ← Ändere 5000 zu 8080 (oder einen anderen freien Port)
+      - "5000:6000"
     volumes:
       - .:/app
       - ./data:/app/data
