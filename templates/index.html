@@ -1,65 +1,36 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <title>Job-Scraping Anwendung</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        h1 {
-            color: #333;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        a {
-            color: #0066cc;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
-</head>
-<body>
-    <h1>Neue Stellenanzeigen für IT-Führungspositionen</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Datum</th>
-                <th>Plattform</th>
-                <th>Titel</th>
-                <th>Unternehmen</th>
-                <th>Link</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for job in jobs %}
-            <tr>
-                <td>{{ job.Datum }}</td>
-                <td>{{ job.Plattform }}</td>
-                <td>{{ job.Titel }}</td>
-                <td>{{ job.Unternehmen }}</td>
-                <td><a href="{{ job.Link }}" target="_blank">Zur Stelle</a></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Stellenanzeigen für IT-Führungspositionen</h1>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Neue Suche starten</h5>
+                <form id="scrapeForm">
+                    <div class="mb-3">
+                        <label for="query" class="form-label">Suchbegriff</label>
+                        <input type="text" class="form-control" id="query" value="CIO OR CTO OR Leiter IT OR Direktor IT OR Head of IT">
+                    </div>
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Standort</label>
+                        <input type="text" class="form-control" id="location" value="Deutschland">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Suchen</button>
+                </form>
+                <div id="scrapeStatus" class="mt-3"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Aktuelle Stellenanzeigen</h5>
+                <div id="jobsContainer" class="table-responsive">
+                    <p>Klicken Sie auf "Suchen" um Jobs zu laden...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

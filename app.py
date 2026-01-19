@@ -1,104 +1,72 @@
-import requests
-from bs4 import BeautifulSoup
-import pandas as pd
-import datetime
-import os
+from flask import Flask, render_template, request, jsonify
+import logging
+from config import FLASK_HOST, FLASK_PORT, FLASK_DEBUG, LOG_LEVEL, PROJECT_NAME
+from scrapers.job_aggregator import JobAggregator
 
-# Globale Variablen
-EXCEL_FILE = "stellenausschreibungen_erweitert.xlsx"
-DATE = datetime.date.today()
-QUERY = "CIO OR CTO OR Leiter IT OR Direktor IT OR Head of IT"
-LOCATION = "Deutschland"
+# Logging konfigurieren
+logging.basicConfig(level=LOG_LEVEL, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-# LinkedIn Scraping
-def scrape_linkedin():
-    print("Suche auf LinkedIn nach neuen Stellenanzeigen...")
-    url = "https://de.linkedin.com/jobs/search/"
-    params = {"keywords": QUERY, "location": LOCATION, "f_TPR": "r86400"}  # letzte 24h
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, params=params, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
-    jobs = []
-    for job in soup.find_all("div", class_="base-card"):
-        title = job.find("h3")
-        company = job.find("h4")
-        link = job.find("a")
-        if title and link:
-            jobs.append({"Datum": DATE, "Plattform": "LinkedIn", "Titel": title.get_text(strip=True), "Unternehmen": company.get_text(strip=True) if company else "", "Link": link["href"]})
-    print(f"LinkedIn: {len(jobs)} neue Stellenanzeigen gefunden.")
-    return jobs
+app = Flask(__name__)
+aggregator = JobAggregator()
 
-# Stepstone Scraping
-def scrape_stepstone():
-    print("Suche auf Stepstone nach neuen Stellenanzeigen...")
-    url = "https://www.stepstone.de/jobs"
-    params = {"searchText": QUERY, "location": LOCATION}
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, params=params, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
-    jobs = []
-    for job in soup.find_all("div", class_="job-item"):
-        title = job.find("h2")
-        company = job.find("span", class_="company")
-        link = job.find("a")
-        if title and link:
-            jobs.append({"Datum": DATE, "Plattform": "Stepstone", "Titel": title.get_text(strip=True), "Unternehmen": company.get_text(strip=True) if company else "", "Link": "https://www.stepstone.de" + link["href"]})
-    print(f"Stepstone: {len(jobs)} neue Stellenanzeigen gefunden.")
-    return jobs
+@app.route('/')
+def index():
+    """Hauptseite"""
+    return render_template('index.html', title=PROJECT_NAME)
 
-# Xing Scraping
-def scrape_xing():
-    print("Suche auf Xing nach neuen Stellenanzeigen...")
-    url = "https://www.xing.com/jobs"
-    params = {"keywords": QUERY, "location": LOCATION}
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, params=params, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
-    jobs = []
-    for job in soup.find_all("li", class_="job"):
-        title = job.find("h3")
-        company = job.find("span", class_="company")
-        link = job.find("a")
-        if title and link:
-            jobs.append({"Datum": DATE, "Plattform": "Xing", "Titel": title.get_text(strip=True), "Unternehmen": company.get_text(strip=True) if company else "", "Link": "https://www.xing.com" + link["href"]})
-    print(f"Xing: {len(jobs)} neue Stellenanzeigen gefunden.")
-    return jobs
+@app.route('/api/scrape', methods=['POST'])
+def scrape_jobs():
+    """API-Endpoint zum Starten des Scrapings"""
+    try:
+        data = request.json
+        query = data.get('query', 'CIO OR CTO OR Leiter IT OR Direktor IT OR Head of IT')
+        location = data.get('location', 'Deutschland')
+        
+        logger.info(f"Starte Scraping mit Query: {query}, Location: {location}")
+        
+        jobs = aggregator.scrape_all(query, location)
+        aggregator.save_to_excel()
+        
+        return jsonify({
+            "success": True,
+            "message": f"{len(jobs)} Jobs gefunden",
+            "count": len(jobs)
+        })
+    except Exception as e:
+        logger.error(f"Fehler beim Scraping: {e}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
 
-# Jobware Scraping
-def scrape_jobware():
-    print("Suche auf Jobware nach neuen Stellenanzeigen...")
-    url = "https://www.jobware.de/jobsuche"
-    params = {"jw_jobname": QUERY, "jw_location": LOCATION}
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(url, params=params, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
-    jobs = []
-    for job in soup.find_all("div", class_="job"):
-        title = job.find("h2")
-        company = job.find("span", class_="company")
-        link = job.find("a")
-        if title and link:
-            jobs.append({"Datum": DATE, "Plattform": "Jobware", "Titel": title.get_text(strip=True), "Unternehmen": company.get_text(strip=True) if company else "", "Link": "https://www.jobware.de" + link["href"]})
-    print(f"Jobware: {len(jobs)} neue Stellenanzeigen gefunden.")
-    return jobs
+@app.route('/api/jobs', methods=['GET'])
+def get_jobs():
+    """API-Endpoint zum Abrufen der gespeicherten Jobs"""
+    try:
+        limit = request.args.get('limit', 50, type=int)
+        jobs = aggregator.get_latest_jobs(limit)
+        
+        return jsonify({
+            "success": True,
+            "count": len(jobs),
+            "jobs": jobs
+        })
+    except Exception as e:
+        logger.error(f"Fehler beim Abrufen von Jobs: {e}")
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
 
-# Hauptfunktion
-def main():
-    print("Starte Suche nach neuen Stellenanzeigen...")
-    all_jobs = []
-    all_jobs.extend(scrape_linkedin())
-    all_jobs.extend(scrape_stepstone())
-    all_jobs.extend(scrape_xing())
-    all_jobs.extend(scrape_jobware())
+@app.errorhandler(404)
+def not_found(error):
+    return render_template('404.html'), 404
 
-    # Speichern in Excel
-    df = pd.DataFrame(all_jobs)
-    if os.path.exists(EXCEL_FILE):
-        existing_df = pd.read_excel(EXCEL_FILE)
-        df = pd.concat([existing_df, df], ignore_index=True)
-    df.to_excel(EXCEL_FILE, index=False)
-    print(f"Alle Stellenanzeigen wurden in '{EXCEL_FILE}' gespeichert.")
-    print("Suche abgeschlossen.")
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('500.html'), 500
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    logger.info(f"Starte {PROJECT_NAME}")
+    app.run(host=FLASK_HOST, port=FLASK_PORT, debug=FLASK_DEBUG)
