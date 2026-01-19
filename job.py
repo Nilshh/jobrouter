@@ -10,8 +10,9 @@ DATE = datetime.date.today()
 QUERY = "CIO OR CTO OR Leiter IT OR Direktor IT OR Head of IT"
 LOCATION = "Deutschland"
 
-# LinkedIn API (Beispiel mit Scraping, da offizielle API stark eingeschränkt)
+# LinkedIn Scraping
 def scrape_linkedin():
+    print("Suche auf LinkedIn nach neuen Stellenanzeigen...")
     url = "https://de.linkedin.com/jobs/search/"
     params = {"keywords": QUERY, "location": LOCATION, "f_TPR": "r86400"}  # letzte 24h
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -24,10 +25,12 @@ def scrape_linkedin():
         link = job.find("a")
         if title and link:
             jobs.append({"Datum": DATE, "Plattform": "LinkedIn", "Titel": title.get_text(strip=True), "Unternehmen": company.get_text(strip=True) if company else "", "Link": link["href"]})
+    print(f"LinkedIn: {len(jobs)} neue Stellenanzeigen gefunden.")
     return jobs
 
 # Stepstone Scraping
 def scrape_stepstone():
+    print("Suche auf Stepstone nach neuen Stellenanzeigen...")
     url = "https://www.stepstone.de/jobs"
     params = {"searchText": QUERY, "location": LOCATION}
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -40,10 +43,12 @@ def scrape_stepstone():
         link = job.find("a")
         if title and link:
             jobs.append({"Datum": DATE, "Plattform": "Stepstone", "Titel": title.get_text(strip=True), "Unternehmen": company.get_text(strip=True) if company else "", "Link": "https://www.stepstone.de" + link["href"]})
+    print(f"Stepstone: {len(jobs)} neue Stellenanzeigen gefunden.")
     return jobs
 
 # Xing Scraping
 def scrape_xing():
+    print("Suche auf Xing nach neuen Stellenanzeigen...")
     url = "https://www.xing.com/jobs"
     params = {"keywords": QUERY, "location": LOCATION}
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -56,10 +61,12 @@ def scrape_xing():
         link = job.find("a")
         if title and link:
             jobs.append({"Datum": DATE, "Plattform": "Xing", "Titel": title.get_text(strip=True), "Unternehmen": company.get_text(strip=True) if company else "", "Link": "https://www.xing.com" + link["href"]})
+    print(f"Xing: {len(jobs)} neue Stellenanzeigen gefunden.")
     return jobs
 
 # Jobware Scraping
 def scrape_jobware():
+    print("Suche auf Jobware nach neuen Stellenanzeigen...")
     url = "https://www.jobware.de/jobsuche"
     params = {"jw_jobname": QUERY, "jw_location": LOCATION}
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -72,10 +79,12 @@ def scrape_jobware():
         link = job.find("a")
         if title and link:
             jobs.append({"Datum": DATE, "Plattform": "Jobware", "Titel": title.get_text(strip=True), "Unternehmen": company.get_text(strip=True) if company else "", "Link": "https://www.jobware.de" + link["href"]})
+    print(f"Jobware: {len(jobs)} neue Stellenanzeigen gefunden.")
     return jobs
 
 # Hauptfunktion
 def main():
+    print("Starte Suche nach neuen Stellenanzeigen...")
     all_jobs = []
     all_jobs.extend(scrape_linkedin())
     all_jobs.extend(scrape_stepstone())
@@ -88,7 +97,8 @@ def main():
         existing_df = pd.read_excel(EXCEL_FILE)
         df = pd.concat([existing_df, df], ignore_index=True)
     df.to_excel(EXCEL_FILE, index=False)
-    print(f"{len(all_jobs)} neue Stellenanzeigen wurden gefunden und gespeichert.")
+    print(f"Alle Stellenanzeigen wurden in '{EXCEL_FILE}' gespeichert.")
+    print("Suche abgeschlossen.")
 
 if __name__ == "__main__":
     main()
