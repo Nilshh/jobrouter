@@ -1,10 +1,22 @@
 services:
-  webapp:
+  web:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: job-scraper
     ports:
       - "5000:5000"
     volumes:
       - .:/app
+      - ./data:/app/data
+      - ./logs:/app/logs
     restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    networks:
+      - job-scraper-network
+
+networks:
+  job-scraper-network:
+    driver: bridge
